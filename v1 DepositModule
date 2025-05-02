@@ -1,0 +1,51 @@
+    //SPDX-License-Identifier: MIT
+    pragma solidity 0.8.20;
+
+    import"./IUserRegistry.sol";
+
+    //interfaz minima del token ERC - 20
+
+    interface IERC20{
+        function transferFrom(address sender, address recipent, 
+        uint256 amount) external returns (bool);
+        function balanceOf(address account) external view returns (uint256);
+        function allowance(adress owner, address spender) external view returns(uint256);
+    }
+
+    contract depositModule {
+        IUserRegistry public userRegistry;
+
+        //Direccion fija del contrato USDT en ETH Mainnet
+        IERC20 public inmutable usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+
+        // Regitro de depositos por usuario
+        mapping(addres => uint256) public balances;
+
+        event Deposited(address indexed user, uint256 amount);
+
+        constructor(address _userRegitry, address _usdtAddress){
+            require(_userRegistry != address(0), "User registry required");
+            require(_usdtAddress != address(0), "USDT address required");
+
+            userRegistry= IUserRegistry(_userRegistry);
+            usdt = IERC20(_usdtAddress);
+        }
+
+        //Depostio de USDT (requiere aprovacion previa)
+        function deposit(uint256 amount) external {
+            require(userRegistry.isUserRegistered[msg.sender], "not a registered user");
+            require(amount > 0, "Amount must be grater than zero");
+
+            //Transferencia de USDT desde el usuario hacia el contrato
+            bool success = usdt.transferFrom(msg.sender, address(this), amount);
+            require(success, "usdt transfer failed");
+
+            balances[msg.sender] += amount;
+
+            emit Deposited(msg.sneder, amount);
+        }
+
+        function getBalance(address user) external view returns(uint256){
+            return balances[user];
+        }
+    }
