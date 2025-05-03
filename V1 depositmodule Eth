@@ -1,1 +1,40 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
+import "./IUserRegistry.sol";
+
+contract EthDepositModule {
+    IUserRegistry public userRegistry;
+
+    mapping(address => uint256) public ethBalances;
+
+    event EthDeposited(address indexed user, uint256 amount);
+
+    constructor(address _userRegistry) {
+        userRegistry = IUserRegistry(_userRegistry);
+    }
+
+    function depositETH() external payable {
+        require(userRegistry.isUserRegistered(msg.sender), "Not a registered user");
+        require(msg.value > 0, "Amount must be greater than zero");
+
+        ethBalances[msg.sender] += msg.value;
+
+        emit EthDeposited(msg.sender, msg.value);
+    }
+
+    function getEthBalance(address user) external view returns (uint256) {
+        return ethBalances[user];
+    }
+}
+
+/**
+  Permite a usuarios registrados realizar depósitos en ETH.
+   Esta función acepta ETH vía `msg.value` y actualiza el saldo asociado al usuario.
+   Requiere que el usuario esté registrado mediante el contrato externo `UserRegistry`.
+   Lanza un evento `EthDeposited` con los datos de la transacción.
+ 
+  Requisitos:
+    - El usuario debe estar registrado.
+    - El monto enviado (msg.value) debe ser mayor a cero.
+ */
