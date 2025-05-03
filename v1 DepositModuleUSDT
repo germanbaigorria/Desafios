@@ -16,7 +16,7 @@
         IUserRegistry public userRegistry;
 
         //Direccion fija del contrato USDT en ETH Mainnet
-        IERC20 public inmutable usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+        IERC20 public inmutableUsdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
         // Regitro de depositos por usuario
         mapping(addres => uint256) public balances;
@@ -31,7 +31,7 @@
             usdt = IERC20(_usdtAddress);
         }
 
-        //Depostio de USDT (requiere aprovacion previa)
+        //Depostio de USDT (requiere aprobacion previa)
         function deposit(uint256 amount) external {
             require(userRegistry.isUserRegistered[msg.sender], "not a registered user");
             require(amount > 0, "Amount must be grater than zero");
