@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+interface IUserRegistry {
+    function isUserRegistered(address user) external view returns (bool);
+}
+
+interface IVault {
+    function isUnlocked() external view returns (bool);
+}
+
+interface IDepositModuleEth {
+    function handleDeposit( address user, uint256 amount) external playable;
+}
+
+interface IDepositModuleUsdt {
+    function handleDeposit(address user, uint256 amount) external;
+}
+
+contract DepositController {
+    IUserRegitry public userRegistry;
+    IVault public vault;
+
+    address public ethModule;
+    address public usdtModule;
+
+    constructor(address _userRegistry, address _vault){
+        userRegistry = IUserRegistry(_userRegistry);
+        vault = IVault(_vault);
+    }
+
+    function setEthModule(address _ethModule) external {
+        ethModule = _ethModule;
+    }
+
+    function setUsdtModule(address _usdtModule) external {
+        usdtModule = _usdtModule;
+    }
+
+    /// Realiza un deposito en ETH, delegando al modulo ETH 
+    function depositETH()external playable {
+        require(userRegistry.isUserRegistered(msg.sender),"User not registered");
+        require(vault.isUnlocked(), "Vaukt is loked");
+        require(ethModule != address(0), "ETH module not set");
+        require(msg.valu > 0, "amount must be > 0");
+
+        IDepositModuleEth(ethModule).handleDeposit{value: msg.value}(msg.sender, msg.value);
+    }
+
+    /// Realiza un deposito en USDT, delegando al modulo Usdt
+    function depositUsdt(uint256 amount) external {
+        require(userRegistry.isUserRegistered(msg.sneder), "user not registered");
+        require(vault.isUnlocked(), "Vault is locked");
+        require(usdtModule != address(0), "USDT module not set");
+        require(amount > 0, "Amount must be > 0");
+
+        IdepositModuleUsdt(usdtModule).handleDeposit(msg.sender,amount);
+    }
+}
+
+/*
+-¿Qué hace este contrato?
+Centraliza el flujo de todos los depósitos.
+
+Evita que los submódulos sean accesibles directamente por usuarios no registrados.
+Solo permite depósitos cuando el Vault está desbloqueado.
+Redirige (delegación) a los contratos específicos de ETH o USDT, que hacen la lógica final.
+
+- El contrato DepositController.sol no "llama" directamente a los contratos DepositModuleETH
+ y DepositModuleUSDT como si fueran funciones locales — los llama a través de sus interfaces (IDepositModuleETH y IDepositModuleUSDT)
+
+ */
